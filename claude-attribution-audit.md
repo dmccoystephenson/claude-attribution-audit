@@ -15,8 +15,9 @@ Because of this, the skill's job is to **bucket** posts by confidence and only a
 ## Non-negotiable rules (carry through every revision)
 
 - **Never put words in the user's mouth.** No first-person assertions ("I reviewed…", "I think…").
-- Revisions use **passive voice** and **explicit Claude attribution** ("The diff was reviewed", "Claude found…").
+- **Passive voice is MANDATORY, not optional — appending the sign-off is NOT sufficient on its own.** Any post containing Claude's first-person authorial voice MUST have that prose converted to passive voice or explicit Claude attribution *in addition to* the sign-off. A sign-off bolted onto a body that still says "I found the bug and I fixed it" still reads as the user's own words above the line. Convert: "I found / I ran / I decided" → "The bug was found / Tests were run / Claude decided"; "my code / my analysis" → "the code / Claude's analysis".
 - Every revised post ends with the sign-off line: `drafted by Claude on behalf of Daniel Stephenson`.
+- **DO NOT rewrite — these are NOT authorial voice, leave them verbatim:** quoted text and blockquotes (`>` lines); code, code fences, and test names; file/repo names that merely contain a pronoun (e.g. `my-claude-skills`); technical tokens like `I/O`; ASCII diagrams; and **domain content** — first-person that belongs to the *subject* of the post, not its author (e.g. an `artificial-consciousness` project quoting a simulated agent saying "I am…"). Converting these corrupts meaning. First-person singular narration of the author's *own actions* is the target; everything else is noise.
 - **When in doubt, do not edit.** Wrongly rewriting a post the user actually wrote themselves is the worst outcome — it misattributes their genuine words to Claude.
 - Applies to every surface: PR titles/descriptions, review bodies, inline review comments, issue titles/bodies, PR/issue comments, commit messages.
 
@@ -39,15 +40,18 @@ Decide scope with the user (default: all repos). They may narrow to a single rep
 
 Count authored items and per-repo distribution. The GitHub search API caps results at 1000 — if a count returns exactly 1000, treat it as "≥1000, capped".
 
-```bash
-# Totals (note: `gh search issues` returns BOTH issues and PRs unless filtered)
-gh search prs    --author=@me --limit 1000 --json url --jq 'length'
-gh search issues --author=@me --limit 1000 --json url --jq 'length'
+**CRITICAL: `gh search issues` and `gh search prs` are DISJOINT result sets** — `gh search issues` returns issues ONLY (no PRs), despite the underlying GitHub endpoint. You MUST run BOTH and sum them; running only one silently misses ~half the surface. The `isPullRequest` JSON field from `gh search` is unreliable (often `false` for everything) — **classify type by URL** (`/pull/` vs `/issues/`), not by that field.
 
-# Per-repo breakdown of authored PRs (most recent 1000)
-gh search prs --author=@me --limit 1000 --json repository \
-  --jq '[.[].repository.name] | group_by(.) | map({repo: .[0], n: length}) | sort_by(.n) | reverse | .[] | "\(.n)\t\(.repo)"'
+```bash
+# Issues (issues only) and PRs (PRs only) — run BOTH, they do not overlap
+gh search issues --owner dmccoystephenson --author=@me --created '>=YYYY-MM-DD' --limit 1000 --json number,repository,url,title
+gh search prs    --owner dmccoystephenson --author=@me --created '>=YYYY-MM-DD' --limit 1000 --json number,repository,url,title
+
+# Per-repo breakdown (run for each of the two result sets)
+#   --jq '[.[].repository.name] | group_by(.) | map({repo:.[0],n:length}) | sort_by(.n) | reverse | .[] | "\(.n)\t\(.repo)"'
 ```
+
+Use `--owner dmccoystephenson` to scope to repos the user *owns* — this automatically excludes org-owned work repos (Tier C), a clean way to drop the riskiest bucket.
 
 ### 3 — Detect markers and classify into tiers
 
@@ -100,27 +104,36 @@ Present this and **stop for user direction.** Ask which tiers to act on.
 
 ### 5 — Revise (only what the user approved)
 
-For each approved item, fetch the current body, rewrite per the **Non-negotiable rules** above, and update:
+Each approved item gets **two passes, not one** (a sign-off alone is insufficient — see the Non-negotiable rules):
+
+1. **Scan the body for authorial first-person.** Use a targeted pattern for Claude narrating *its own* actions/opinions, e.g.:
+   `(^|[^A-Za-z\`])(I (found|ran|made|used|asked|inferred|optimized|noticed|resolved|started|chose|decided|wrote|authored|verified|think|realized|could|had|almost)|I've|I'd|## How I|What I did|my code|my analysis|my first attempt)`
+   Then **manually triage every hit** against the exclusion list in the Non-negotiable rules (repo names like `my-claude-skills`, `I/O`, code/test names, blockquotes, ASCII, domain content). Most hits are noise — only convert true authorial narration.
+2. **Convert** the surviving authorial sentences to passive / explicit-Claude voice, then **append** the sign-off block:
+   ```
+   \n\n---\n\n_drafted by Claude on behalf of Daniel Stephenson_
+   ```
+   Bodies with NO authorial first-person need only the sign-off appended.
+
+**Editing mechanics (robust against bodies with special chars/heredocs):** build the new body in a file and PATCH via the REST API with `jq --rawfile`. **Issues and PRs use DIFFERENT endpoints** (classify by URL):
 
 ```bash
-# PR / issue body
-gh pr  edit  <num> --repo <repo> --body "$(cat <<'EOF'
-<rewritten body — passive voice, Claude attributed>
-
-drafted by Claude on behalf of Daniel Stephenson
-EOF
-)"
-gh issue edit <num> --repo <repo> --body "..."   # same shape
-
-# A comment (issue or PR) — edit via the comments API by comment id
-gh api -X PATCH repos/<owner>/<repo>/issues/comments/<comment_id> -f body="..."
+# issue  (url contains /issues/)
+jq -n --rawfile body /tmp/newbody.md '{body:$body}' | gh api -X PATCH "repos/$OWNER_REPO/issues/$NUM" --input -
+# pull request  (url contains /pull/)
+jq -n --rawfile body /tmp/newbody.md '{body:$body}' | gh api -X PATCH "repos/$OWNER_REPO/pulls/$NUM"  --input -
+# comment (issue OR PR comment) — by comment id
+jq -n --rawfile body /tmp/newbody.md '{body:$body}' | gh api -X PATCH "repos/$OWNER_REPO/issues/comments/$CID" --input -
 ```
 
+To match the user's established format, place the sign-off after a `---` separator and italicize it: `_drafted by Claude on behalf of Daniel Stephenson_`.
+
 Revision discipline:
-- **Minimal rewrite.** Append the sign-off and convert first-person assertions to passive/attributed voice. Do not restructure or add claims that weren't there.
+- **Minimal rewrite.** Convert authorial first-person and append the sign-off. Do not restructure or add claims that weren't there.
 - If a post contains genuine first-person content that reads like the *user* actually wrote it (not Claude's typical output), **flag it back to the user instead of editing** — it may belong to Tier D, not A.
+- Editorial plural "we/our" in technical analysis is a softer case than first-person singular "I"; convert it where the user wants full passive coverage, but flag rather than silently rewrite collaborative product-planning issues ("We should add X") whose voice is intentional.
 - Commit messages can't be safely rewritten in place on shared history — list them for the user rather than rewriting published commits.
-- Work in batches; report each batch's edits with links so the user can spot-check.
+- Cache each fetched body locally so a re-run / resume doesn't re-fetch; work in batches and log every edit (URL + OK/FAIL).
 
 ### 6 — Report
 
