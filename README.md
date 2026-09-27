@@ -12,7 +12,7 @@ GitHub's authorship metadata cannot distinguish the user's own writing from Clau
 |---|---|---|
 | **A — Strong-signal, no sign-off** | Has a Claude footer/trailer but not the sign-off line | Auto-revise candidate, after confirmation |
 | **B — Contextual (dev-loop / automation repos)** | Very likely Claude-drafted but no marker | Surfaced for the user to confirm; never silent-edited |
-| **C — Probably human (work repos)** | The user's day-job / employer repos | Excluded by default |
+| **C — Probably human (work repos)** | The user's day-job / employer repos | Excluded by default; only touched if the user explicitly asks |
 | **D — Ambiguous no-marker** | Everything else | Left for manual review; not auto-edited |
 
 Tier B and Tier C membership is derived at runtime, not hard-coded here. Recon and classification are read-only; nothing is edited until the user approves specific tiers after reviewing the worklist. Approved revisions convert authorial first-person prose to passive voice and append the sign-off. When in doubt, a post is left untouched. See the skill file for the full steps and rules.
