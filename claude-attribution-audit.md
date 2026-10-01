@@ -117,13 +117,19 @@ Each approved item gets **two passes, not one** (a sign-off alone is insufficien
 
 **Editing mechanics (robust against bodies with special chars/heredocs):** build the new body in a file and PATCH via the REST API with `jq --rawfile`. **Issues and PRs use DIFFERENT endpoints** (classify by URL):
 
+Give every item its own body file, keyed on repo and number (or comment id). A single shared path such as `/tmp/newbody.md` lets a stale body from an earlier item, or from a concurrent session, be PATCHed onto the wrong post.
+
 ```bash
+# per-item body file — never reuse one path across items
+BODY_FILE="/tmp/claude-attribution-audit-${OWNER_REPO//\//_}-$NUM.md"     # issue or PR
+# BODY_FILE="/tmp/claude-attribution-audit-${OWNER_REPO//\//_}-c$CID.md"  # comment
+
 # issue  (url contains /issues/)
-jq -n --rawfile body /tmp/newbody.md '{body:$body}' | gh api -X PATCH "repos/$OWNER_REPO/issues/$NUM" --input -
+jq -n --rawfile body "$BODY_FILE" '{body:$body}' | gh api -X PATCH "repos/$OWNER_REPO/issues/$NUM" --input -
 # pull request  (url contains /pull/)
-jq -n --rawfile body /tmp/newbody.md '{body:$body}' | gh api -X PATCH "repos/$OWNER_REPO/pulls/$NUM"  --input -
+jq -n --rawfile body "$BODY_FILE" '{body:$body}' | gh api -X PATCH "repos/$OWNER_REPO/pulls/$NUM"  --input -
 # comment (issue OR PR comment) — by comment id
-jq -n --rawfile body /tmp/newbody.md '{body:$body}' | gh api -X PATCH "repos/$OWNER_REPO/issues/comments/$CID" --input -
+jq -n --rawfile body "$BODY_FILE" '{body:$body}' | gh api -X PATCH "repos/$OWNER_REPO/issues/comments/$CID" --input -
 ```
 
 To match the user's established format, place the sign-off after a `---` separator and italicize it: `_drafted by Claude on behalf of Daniel Stephenson_`.
@@ -150,15 +156,20 @@ Run this section when the skill may have drifted from reality — e.g. after the
    - `gh search`/`gh pr`/`gh issue`/`gh api` commands and flags still exist and behave as described
    - The sign-off text still matches the user's stated convention
    - The Tier B dev-loop repo list and Tier C work-repo list still reflect reality (re-derive Tier B from installed `*-dev-loop` skills)
-3. For each problem found, open a GitHub issue:
-   ```bash
-   gh issue create --repo dmccoystephenson/claude-attribution-audit \
-     --title "<problem summary>" \
-     --body "$(cat <<'EOF'
+3. For each problem found, open a GitHub issue. Write the body to a uniquely named file first (e.g. `/tmp/claude-attribution-audit-self-audit-<short-slug>.md`) with this content, in passive voice and ending with the sign-off:
+   ```
    **Section:** <which step or section is wrong>
    **Problem:** <what is incorrect>
    **Expected behavior:** <what it should do instead>
-   EOF
-   )"
+
+   ---
+
+   _drafted by Claude on behalf of Daniel Stephenson_
+   ```
+   Then pass it with `--body-file` (avoid `--body "$(cat <<'EOF' …)"`, which some harnesses reject):
+   ```bash
+   gh issue create --repo dmccoystephenson/claude-attribution-audit \
+     --title "<problem summary>" \
+     --body-file /tmp/claude-attribution-audit-self-audit-<short-slug>.md
    ```
 4. Report a summary: how many issues were filed, or confirm the skill is up to date.
