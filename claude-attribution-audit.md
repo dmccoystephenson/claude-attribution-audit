@@ -55,15 +55,18 @@ Use `--owner dmccoystephenson` to scope to repos the user *owns* — this automa
 
 ### 3 — Detect markers and classify into tiers
 
-**Strong machine markers** (high precision — almost certainly Claude):
+**Strong machine markers** (high precision — almost certainly Claude). As in Step 2, run every marker search against **both** `gh search issues` and `gh search prs` — they are disjoint, and PR descriptions are where the `Generated with Claude Code` footer most often appears. Classify the combined results by URL.
 
 ```bash
 # Already-compliant — these are FINE, exclude from the worklist
 gh search issues --author=@me --match body "drafted by Claude on behalf" --limit 1000 --json url,title,repository
+gh search prs    --author=@me --match body "drafted by Claude on behalf" --limit 1000 --json url,title,repository
 
 # Strong marker but (likely) no sign-off → primary revision candidates
 gh search issues --author=@me --match body "Generated with Claude Code" --limit 1000 --json url,title,repository
+gh search prs    --author=@me --match body "Generated with Claude Code" --limit 1000 --json url,title,repository
 gh search issues --author=@me --match body "Co-authored-by Claude"       --limit 1000 --json url,title,repository
+gh search prs    --author=@me --match body "Co-authored-by Claude"       --limit 1000 --json url,title,repository
 ```
 
 For commits (markers live in commit messages, not the search-issues surface):
