@@ -85,6 +85,8 @@ gh search commits --author=@me "Generated with Claude Code"     --limit 100 --js
 | **C — Probably human (work repos)** | The user's day-job / employer repo cluster | Exclude by default; only touch if the user explicitly asks |
 | **D — Ambiguous no-marker** | Everything else with no marker and no clear context | Leave for manual eyeball; do not auto-edit |
 
+**Tier C overrides Tier A.** The marker searches above don't pass `--owner`, so their hits can include work repos. Org-owned repos are only one case, because a work repo can also sit under the user's own account. A marker hit in a Tier C repo stays in Tier C: count it there and keep it out of the Tier A worklist unless the user explicitly opts that repo in.
+
 **Derive the tier lists at runtime — do not hard-code them here** (this file is public; the specific repo names are the user's private taxonomy):
 
 - **Tier B** — list the installed dev-loop skills and map each to its target repo:
@@ -98,7 +100,7 @@ gh search commits --author=@me "Generated with Claude Code"     --limit 100 --js
 
 Build a markdown report — do **not** edit anything yet:
 
-- **Tier A (auto-revise candidates):** table of `repo · #num · title · URL · which marker · missing sign-off?`
+- **Tier A (auto-revise candidates):** table of `repo · #num · title · URL · which marker · missing sign-off?`. Marker hits from Tier C repos are left out and counted under Tier C instead.
 - **Tier B (confirm-first):** per-repo counts and links; flagged as "likely Claude, needs your confirmation".
 - **Tier C / D:** counts only, with a one-line note that these are excluded by default and why.
 - A headline summary: "N strong-signal items need the sign-off; M contextual items await your confirmation; exact detection is impossible for the rest."
