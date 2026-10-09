@@ -53,6 +53,8 @@ gh search prs    --owner dmccoystephenson --author=@me --created '>=YYYY-MM-DD' 
 
 Use `--owner dmccoystephenson` to scope to repos the user *owns* — this automatically excludes org-owned work repos (Tier C), a clean way to drop the riskiest bucket.
 
+**When a search is capped,** split it into narrower `--created` windows (e.g. one per year, or per quarter for dense periods), re-run each window, and union the results by URL. Keep splitting until no window returns exactly 1000. The same rule applies to the Step 3 issue/PR marker searches. If a count still can't be brought under the cap, carry it forward as a lower bound and say so in the Step 4 report.
+
 ### 3 — Detect markers and classify into tiers
 
 **Strong machine markers** (high precision — almost certainly Claude). As in Step 2, run every marker search against **both** `gh search issues` and `gh search prs` — they are disjoint, and PR descriptions are where the `Generated with Claude Code` footer most often appears. Classify the combined results by URL.
@@ -75,6 +77,8 @@ For commits (markers live in commit messages, not the search-issues surface):
 gh search commits --author=@me "Co-authored-by Claude"          --limit 100 --json repository,sha,commit
 gh search commits --author=@me "Generated with Claude Code"     --limit 100 --json repository,sha,commit
 ```
+
+A commit search that returns exactly its `--limit` (100) is probably truncated. Commits are only listed for the user, never rewritten (Step 5), so report the list as incomplete instead of presenting it as the full set.
 
 **Classify each authored repo into one of four tiers:**
 
@@ -103,6 +107,7 @@ Build a markdown report — do **not** edit anything yet:
 - **Tier A (auto-revise candidates):** table of `repo · #num · title · URL · which marker · missing sign-off?`. Marker hits from Tier C repos are left out and counted under Tier C instead.
 - **Tier B (confirm-first):** per-repo counts and links; flagged as "likely Claude, needs your confirmation".
 - **Tier C / D:** counts only, with a one-line note that these are excluded by default and why.
+- **Capped or truncated searches:** name each one (Step 2 cap, Step 3 commit limit) and mark the counts it feeds as lower bounds.
 - A headline summary: "N strong-signal items need the sign-off; M contextual items await your confirmation; exact detection is impossible for the rest."
 
 Present this and **stop for user direction.** Ask which tiers to act on.
