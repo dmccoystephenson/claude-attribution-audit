@@ -80,7 +80,7 @@ gh search commits --author=@me "Generated with Claude Code"     --limit 100 --js
 
 A commit search that returns exactly its `--limit` (100) is probably truncated. Commits are only listed for the user, never rewritten (Step 5), so report the list as incomplete instead of presenting it as the full set.
 
-**Surfaces these searches do not reach.** `--author=@me` matches issues and PRs the user *opened*, and `--match body` searches their bodies. The searches above therefore never collect PR/issue comments (including ones the user left on items opened by others), review bodies, or inline review comments. Do not count those surfaces as audited. Name them as not searched in the Step 4 report. A specific comment or review the user points to can still be revised in Step 5 under the same rules.
+**Surfaces these searches do not reach.** `--author=@me` matches issues and PRs the user *opened*, and `--match body` searches their bodies. The searches above therefore never collect PR/issue comments (including ones the user left on items opened by others), review bodies, or inline review comments. Do not count those surfaces as audited. Name them as not searched in the Step 4 report. A specific PR/issue comment the user points to can still be revised through the Step 5 comment endpoint under the same rules. Step 5 gives no endpoint for review bodies or inline review comments, so list any of those the user points to rather than editing them.
 
 **Classify each authored repo into one of four tiers:**
 
