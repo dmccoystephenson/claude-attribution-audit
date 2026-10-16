@@ -80,6 +80,8 @@ gh search commits --author=@me "Generated with Claude Code"     --limit 100 --js
 
 A commit search that returns exactly its `--limit` (100) is probably truncated. Commits are only listed for the user, never rewritten (Step 5), so report the list as incomplete instead of presenting it as the full set.
 
+**Surfaces these searches do not reach.** `--author=@me` matches issues and PRs the user *opened*, and `--match body` searches their bodies. The searches above therefore never collect PR/issue comments (including ones the user left on items opened by others), review bodies, or inline review comments. Do not count those surfaces as audited. Name them as not searched in the Step 4 report. A specific PR/issue comment the user points to can still be revised through the Step 5 comment endpoint under the same rules. Step 5 gives no endpoint for review bodies or inline review comments, so list any of those the user points to rather than editing them.
+
 **Classify each authored repo into one of four tiers:**
 
 | Tier | What it is | Action |
@@ -108,6 +110,7 @@ Build a markdown report — do **not** edit anything yet:
 - **Tier B (confirm-first):** per-repo counts and links; flagged as "likely Claude, needs your confirmation".
 - **Tier C / D:** counts only, with a one-line note that these are excluded by default and why.
 - **Capped or truncated searches:** name each one (Step 2 cap, Step 3 commit limit) and mark the counts it feeds as lower bounds.
+- **Surfaces not searched:** PR/issue comments, review bodies, and inline review comments (see Step 3). State that they were not audited, so the report does not read as full coverage.
 - A headline summary: "N strong-signal items need the sign-off; M contextual items await your confirmation; exact detection is impossible for the rest."
 
 Present this and **stop for user direction.** Ask which tiers to act on.
@@ -148,12 +151,13 @@ Revision discipline:
 - **Minimal rewrite.** Convert authorial first-person and append the sign-off. Do not restructure or add claims that weren't there.
 - If a post contains genuine first-person content that reads like the *user* actually wrote it (not Claude's typical output), **flag it back to the user instead of editing** — it may belong to Tier D, not A.
 - Editorial plural "we/our" in technical analysis is a softer case than first-person singular "I"; convert it where the user wants full passive coverage, but flag rather than silently rewrite collaborative product-planning issues ("We should add X") whose voice is intentional.
+- Titles never carry the sign-off; it goes in the body only. If a title contains authorial first-person, flag it to the user rather than rewriting it, since the body's sign-off does not cover the title.
 - Commit messages can't be safely rewritten in place on shared history — list them for the user rather than rewriting published commits.
 - Cache each fetched body locally so a re-run / resume doesn't re-fetch; work in batches and log every edit (URL + OK/FAIL).
 
 ### 6 — Report
 
-Summarize: how many items were revised (with links), how many were surfaced for confirmation and await a decision, and how many were deliberately left untouched (Tiers C/D) and why. Reaffirm that detection was heuristic and the untouched buckets are not "confirmed clean" — only "not confidently Claude".
+Summarize: how many items were revised (with links), how many were surfaced for confirmation and await a decision, and how many were deliberately left untouched (Tiers C/D) and why. Repeat which surfaces were not searched (Step 3). Reaffirm that detection was heuristic and the untouched buckets are not "confirmed clean" — only "not confidently Claude".
 
 ---
 
