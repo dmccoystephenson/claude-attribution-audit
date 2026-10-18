@@ -32,7 +32,7 @@ gh auth status
 gh api user --jq '.login'   # expect: dmccoystephenson
 ```
 
-If not authenticated, stop and ask the user to run `! gh auth status` / authenticate.
+If not authenticated, stop and ask the user to run `! gh auth status` / authenticate. If authenticated as any login other than `dmccoystephenson`, stop, report the login that was seen, and ask the user to authenticate as `dmccoystephenson` before any search runs. Every search uses `--author=@me`, so the wrong account would audit someone else's posts.
 
 Decide scope with the user (default: all repos). They may narrow to a single repo (`--repo owner/name` on searches) or a date window (`created:>=YYYY-MM-DD`). Scoping by repo is the most useful lever — see the tiers in Step 3.
 
@@ -99,7 +99,7 @@ A commit search that returns exactly its `--limit` (100) is probably truncated. 
   ```bash
   ls ~/.claude/commands/ | grep -- '-dev-loop'
   ```
-  Each `*-dev-loop` skill names the repo it drives in its body; read those to build the Tier B repo set.
+  Each `*-dev-loop` skill names the repo it drives in its body; read those to build the Tier B repo set. If the `ls` finds no `*-dev-loop` skills, treat Tier B as empty, say so in the Step 4 report, and ask the user whether any repos should be confirmed as automation-driven. Until the user answers, no-marker posts in those repos stay in Tier D.
 - **Tier C** — ask the user which repos are work/employer-owned (or infer from the per-repo breakdown in Step 2: dense, recent, non-personal-project clusters). When unsure whether a repo is Tier C, treat it as Tier C (exclude) rather than risk editing the user's genuine work posts.
 
 ### 4 — Produce the revision worklist
@@ -107,7 +107,7 @@ A commit search that returns exactly its `--limit` (100) is probably truncated. 
 Build a markdown report — do **not** edit anything yet:
 
 - **Tier A (auto-revise candidates):** table of `repo · #num · title · URL · which marker · missing sign-off?`. Marker hits from Tier C repos are left out and counted under Tier C instead.
-- **Tier B (confirm-first):** per-repo counts and links; flagged as "likely Claude, needs your confirmation".
+- **Tier B (confirm-first):** per-repo counts and links; flagged as "likely Claude, needs your confirmation". If no `*-dev-loop` skills were found in Step 3, say that Tier B is empty for that reason.
 - **Tier C / D:** counts only, with a one-line note that these are excluded by default and why.
 - **Capped or truncated searches:** name each one (Step 2 cap, Step 3 commit limit) and mark the counts it feeds as lower bounds.
 - **Surfaces not searched:** PR/issue comments, review bodies, and inline review comments (see Step 3). State that they were not audited, so the report does not read as full coverage.
