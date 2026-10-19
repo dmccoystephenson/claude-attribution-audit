@@ -34,7 +34,9 @@ gh api user --jq '.login'   # expect: dmccoystephenson
 
 If not authenticated, stop and ask the user to run `! gh auth status` / authenticate. If authenticated as any login other than `dmccoystephenson`, stop, report the login that was seen, and ask the user to authenticate as `dmccoystephenson` before any search runs. Every search uses `--author=@me`, so the wrong account would audit someone else's posts.
 
-Decide scope with the user (default: all repos). They may narrow to a single repo (`--repo owner/name` on searches) or a date window (`created:>=YYYY-MM-DD`). Scoping by repo is the most useful lever — see the tiers in Step 3.
+Decide scope with the user (default: all repos, no date window). They may narrow to a single repo (`--repo owner/name` on searches) or a date window (`--created '>=YYYY-MM-DD'`). Scoping by repo is the most useful lever — see the tiers in Step 3.
+
+Apply the chosen scope to every issue and PR search in Steps 2 and 3, including the marker searches. Otherwise a single-repo audit still builds its Tier A worklist from every repo. With no date window, drop `--created '>=YYYY-MM-DD'` from the Step 2 searches rather than running the placeholder.
 
 ### 2 — Size the surface (read-only recon)
 
