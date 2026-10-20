@@ -57,7 +57,7 @@ Use `--owner dmccoystephenson` to scope to repos the user *owns* — this automa
 
 **When a search is capped,** split it into narrower `--created` windows (e.g. one per year, or per quarter for dense periods), re-run each window, and union the results by URL. Keep splitting until no window returns exactly 1000. The same rule applies to the Step 3 issue/PR marker searches. If a count still can't be brought under the cap, carry it forward as a lower bound and say so in the Step 4 report.
 
-**When a search returns nothing or fails,** do not read it as "nothing to fix". If both Step 2 searches return zero results, the scope is probably wrong (a mistyped `--repo`, a `--created` window in the future, or the wrong account). Report the exact commands and scope to the user and stop before Step 3. A `gh` error (HTTP 401/403 or a rate-limit message) is not an empty result. Retry once, and if it still fails, report the error text and stop. An empty Step 3 marker search is a normal outcome: it means no body carries that marker, not that the repos are clean.
+**When a search returns nothing or fails,** do not read it as "nothing to fix". If both Step 2 searches return zero results, the scope is probably wrong (a mistyped `--repo`, a `--created` window in the future, or the wrong account). Report the exact commands and scope to the user and stop before Step 3. A `gh` error (HTTP 401/403 or a rate-limit message) is not an empty result. Retry once (for a rate limit, after the reset time `gh` reports), and if it still fails, report the error text and stop. An empty Step 3 marker search is a normal outcome: it means no body carries that marker, not that the repos are clean.
 
 ### 3 — Detect markers and classify into tiers
 
