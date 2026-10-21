@@ -84,7 +84,7 @@ gh search commits --author=@me "Co-authored-by Claude"          --limit 100 --js
 gh search commits --author=@me "Generated with Claude Code"     --limit 100 --json repository,sha,commit
 ```
 
-A commit search that returns exactly its `--limit` (100) is probably truncated. Commits are only listed for the user, never rewritten (Step 5), so report the list as incomplete instead of presenting it as the full set. These searches also ignore the Step 1 scope (see Step 1), so filter the results to the chosen repo and treat any date window as not applied.
+A commit search that returns exactly its `--limit` (100) is probably truncated. Commits are only listed for the user, never rewritten (Step 5), so report the list as incomplete instead of presenting it as the full set. These searches also ignore the Step 1 scope (see Step 1), so filter the results to the chosen repo and treat any date window as not applied. Check for truncation on the unfiltered count, before the repo filter: a filtered list shorter than 100 can still be missing commits from that repo.
 
 **Surfaces these searches do not reach.** `--author=@me` matches issues and PRs the user *opened*, and `--match body` searches their bodies. The searches above therefore never collect PR/issue comments (including ones the user left on items opened by others), review bodies, or inline review comments. Do not count those surfaces as audited. Name them as not searched in the Step 4 report. A specific PR/issue comment the user points to can still be revised through the Step 5 comment endpoint under the same rules. Step 5 gives no endpoint for review bodies or inline review comments, so list any of those the user points to rather than editing them.
 
