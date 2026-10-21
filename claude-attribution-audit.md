@@ -38,6 +38,8 @@ Decide scope with the user (default: all repos, no date window). They may narrow
 
 Apply the chosen scope to every issue and PR search in Steps 2 and 3, including the marker searches. Otherwise a single-repo audit still builds its Tier A worklist from every repo. With no date window, drop `--created '>=YYYY-MM-DD'` from the Step 2 searches rather than running the placeholder.
 
+The Step 3 commit searches do not take the chosen scope. They run across every repo and every date. For a single-repo audit, drop commits from other repos (by their `repository` field) before reporting. A date window is not applied to commits at all, so the Step 4 report must say so.
+
 ### 2 — Size the surface (read-only recon)
 
 Count authored items and per-repo distribution. The GitHub search API caps results at 1000 — if a count returns exactly 1000, treat it as "≥1000, capped".
@@ -82,7 +84,7 @@ gh search commits --author=@me "Co-authored-by Claude"          --limit 100 --js
 gh search commits --author=@me "Generated with Claude Code"     --limit 100 --json repository,sha,commit
 ```
 
-A commit search that returns exactly its `--limit` (100) is probably truncated. Commits are only listed for the user, never rewritten (Step 5), so report the list as incomplete instead of presenting it as the full set.
+A commit search that returns exactly its `--limit` (100) is probably truncated. Commits are only listed for the user, never rewritten (Step 5), so report the list as incomplete instead of presenting it as the full set. These searches also ignore the Step 1 scope (see Step 1), so filter the results to the chosen repo and treat any date window as not applied.
 
 **Surfaces these searches do not reach.** `--author=@me` matches issues and PRs the user *opened*, and `--match body` searches their bodies. The searches above therefore never collect PR/issue comments (including ones the user left on items opened by others), review bodies, or inline review comments. Do not count those surfaces as audited. Name them as not searched in the Step 4 report. A specific PR/issue comment the user points to can still be revised through the Step 5 comment endpoint under the same rules. Step 5 gives no endpoint for review bodies or inline review comments, so list any of those the user points to rather than editing them.
 
@@ -114,6 +116,7 @@ Build a markdown report — do **not** edit anything yet:
 - **Tier B (confirm-first):** per-repo counts and links; flagged as "likely Claude, needs your confirmation". If no `*-dev-loop` skills were found in Step 3, say that Tier B is empty for that reason.
 - **Tier C / D:** counts only, with a one-line note that these are excluded by default and why.
 - **Capped or truncated searches:** name each one (Step 2 cap, Step 3 commit limit) and mark the counts it feeds as lower bounds.
+- **Commit scope:** if the user chose a repo or date window in Step 1, state that the commit list was filtered to that repo after the search and that no date window was applied to commits.
 - **Surfaces not searched:** PR/issue comments, review bodies, and inline review comments (see Step 3). State that they were not audited, so the report does not read as full coverage.
 - A headline summary: "N strong-signal items need the sign-off; M contextual items await your confirmation; exact detection is impossible for the rest."
 
