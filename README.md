@@ -17,7 +17,7 @@ GitHub's authorship metadata cannot distinguish the user's own writing from Clau
 
 Tier B and Tier C membership is derived at runtime, not hard-coded here. Tier C wins over Tier A: a work-repo post stays excluded even when it carries a Claude marker. Recon and classification are read-only; nothing is edited until the user approves specific tiers after reviewing the worklist. Approved revisions convert authorial first-person prose to passive voice and append the sign-off. When in doubt, a post is left untouched.
 
-The marker searches cover the bodies of issues and PRs the user opened, plus commit messages (which are listed for the user, never rewritten). PR/issue comments, review bodies, and inline review comments are not searched. The report names these surfaces as not audited, and capped searches are reported as lower bounds. See the skill file for the full steps and rules.
+The marker searches cover the bodies of issues and PRs the user opened, plus commit messages (which are listed for the user, never rewritten). Commit results are filtered to a chosen repo after the search, but a chosen date window is not applied to them. PR/issue comments, review bodies, and inline review comments are not searched. The report names these surfaces as not audited, and capped searches are reported as lower bounds. See the skill file for the full steps and rules.
 
 ## License
 
