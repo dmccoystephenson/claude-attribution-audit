@@ -174,9 +174,10 @@ Run this section when the skill may have drifted from reality — e.g. after the
 
 1. Read this skill file from top to bottom.
 2. For each command, path, or assumption, verify it is still correct:
-   - `gh search`/`gh pr`/`gh issue`/`gh api` commands and flags still exist and behave as described
-   - The sign-off text still matches the user's stated convention
-   - The Tier B dev-loop repo list and Tier C work-repo list still reflect reality (re-derive Tier B from installed `*-dev-loop` skills)
+   - The commands this file runs still exist and behave as described: `gh auth status` and `gh api user` (Step 1), `gh search issues`/`prs`/`commits` with their flags and `--json` fields (Steps 2–3), the `gh api -X PATCH` endpoints and `jq --rawfile` (Step 5), and `gh issue create` (below)
+   - The sign-off text still matches the user's stated convention and is spelled identically everywhere in this file
+   - Tier B and Tier C are still derived at runtime and never recorded here: the Step 3 `ls ~/.claude/commands/ | grep -- '-dev-loop'` still finds the installed dev-loop skills, and Tier C is still asked of the user (or inferred) each run
+   - The surfaces named as not searched in Step 3 are still named the same way in the Step 4 and Step 6 reports
 3. For each problem found, open a GitHub issue. Write the body to a uniquely named file first (e.g. `/tmp/claude-attribution-audit-self-audit-<short-slug>.md`) with this content, in passive voice and ending with the sign-off:
    ```
    **Section:** <which step or section is wrong>
