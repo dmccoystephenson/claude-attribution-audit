@@ -139,10 +139,17 @@ Each approved item gets **two passes, not one** (a sign-off alone is insufficien
 
 Give every item its own body file, keyed on repo and number (or comment id). A single shared path such as `/tmp/newbody.md` lets a stale body from an earlier item, or from a concurrent session, be PATCHed onto the wrong post.
 
+**Fetch the current body first.** The Step 2 and Step 3 searches do not collect `body`, so fetch each approved item's body read-only from the same endpoint the PATCH targets, just before revising it. Build the revision from that fetched text, never from memory or an earlier run. Fetch it again right before the PATCH. If it differs from the text the revision was built from, the post was edited in the meantime, possibly by the user, so flag it back to the user instead of editing it.
+
 ```bash
 # per-item body file — never reuse one path across items
 BODY_FILE="/tmp/claude-attribution-audit-${OWNER_REPO//\//_}-$NUM.md"     # issue or PR
 # BODY_FILE="/tmp/claude-attribution-audit-${OWNER_REPO//\//_}-c$CID.md"  # comment
+
+# read-only fetch of the current body (GET on the same path the PATCH below targets)
+gh api "repos/$OWNER_REPO/issues/$NUM" --jq '.body'            # issue
+gh api "repos/$OWNER_REPO/pulls/$NUM" --jq '.body'             # pull request
+gh api "repos/$OWNER_REPO/issues/comments/$CID" --jq '.body'   # comment
 
 # issue  (url contains /issues/)
 jq -n --rawfile body "$BODY_FILE" '{body:$body}' | gh api -X PATCH "repos/$OWNER_REPO/issues/$NUM" --input -
@@ -160,7 +167,7 @@ Revision discipline:
 - Editorial plural "we/our" in technical analysis is a softer case than first-person singular "I"; convert it where the user wants full passive coverage, but flag rather than silently rewrite collaborative product-planning issues ("We should add X") whose voice is intentional.
 - Titles never carry the sign-off; it goes in the body only. If a title contains authorial first-person, flag it to the user rather than rewriting it, since the body's sign-off does not cover the title.
 - Commit messages can't be safely rewritten in place on shared history — list them for the user rather than rewriting published commits.
-- Cache each fetched body locally so a re-run / resume doesn't re-fetch; work in batches and log every edit (URL + OK/FAIL).
+- Cache each fetched body locally to resume a run, but treat the cache as a record, not a source. On resume, fetch the body again and flag the item to the user if it no longer matches the cached copy. Work in batches and log every edit (URL + OK/FAIL).
 
 ### 6 — Report
 
@@ -174,7 +181,7 @@ Run this section when the skill may have drifted from reality — e.g. after the
 
 1. Read this skill file from top to bottom.
 2. For each command, path, or assumption, verify it is still correct:
-   - The commands this file runs still exist and behave as described: `gh auth status` and `gh api user` (Step 1), `gh search issues`/`prs`/`commits` with their flags and `--json` fields (Steps 2–3), the `gh api -X PATCH` endpoints and `jq --rawfile` (Step 5), and `gh issue create` (below)
+   - The commands this file runs still exist and behave as described: `gh auth status` and `gh api user` (Step 1), `gh search issues`/`prs`/`commits` with their flags and `--json` fields (Steps 2–3), the read-only `gh api` body fetches, the `gh api -X PATCH` endpoints, and `jq --rawfile` (Step 5), and `gh issue create` (below)
    - The sign-off text still matches the user's stated convention and is spelled identically everywhere in this file
    - Tier B and Tier C are still derived at runtime and never recorded here: the Step 3 `ls ~/.claude/commands/ | grep -- '-dev-loop'` still finds the installed dev-loop skills, and Tier C is still asked of the user (or inferred) each run
    - The surfaces named as not searched in Step 3 are still named the same way in the Step 4 and Step 6 reports
