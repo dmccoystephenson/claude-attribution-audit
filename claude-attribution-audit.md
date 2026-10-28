@@ -115,6 +115,7 @@ Build a markdown report — do **not** edit anything yet:
 - **Tier A (auto-revise candidates):** table of `repo · #num · title · URL · which marker · missing sign-off?`. Marker hits from Tier C repos are left out and counted under Tier C instead.
 - **Tier B (confirm-first):** per-repo counts and links; flagged as "likely Claude, needs your confirmation". If no `*-dev-loop` skills were found in Step 3, say that Tier B is empty for that reason.
 - **Tier C / D:** counts only, with a one-line note that these are excluded by default and why.
+- **Commits (list only):** table of `repo · short SHA · first line of message · which marker` from the Step 3 commit searches, marked as never rewritten (see Step 5). Commit hits from Tier C repos are left out and counted under Tier C instead.
 - **Capped or truncated searches:** name each one (Step 2 cap, Step 3 commit limit) and mark the counts it feeds as lower bounds.
 - **Commit scope:** if the user chose a repo or date window in Step 1, state that the commit list was filtered to that repo after the search and that no date window was applied to commits.
 - **Surfaces not searched:** PR/issue comments, review bodies, and inline review comments (see Step 3). State that they were not audited, so the report does not read as full coverage.
@@ -171,7 +172,7 @@ Revision discipline:
 
 ### 6 — Report
 
-Summarize: how many items were revised (with links), how many were surfaced for confirmation and await a decision, and how many were deliberately left untouched (Tiers C/D) and why. Repeat which surfaces were not searched (Step 3). Reaffirm that detection was heuristic and the untouched buckets are not "confirmed clean" — only "not confidently Claude".
+Summarize: how many items were revised (with links), how many were surfaced for confirmation and await a decision, and how many were deliberately left untouched (Tiers C/D) and why. State how many commits were listed and that none were rewritten. Repeat which surfaces were not searched (Step 3). Reaffirm that detection was heuristic and the untouched buckets are not "confirmed clean" — only "not confidently Claude".
 
 ---
 
