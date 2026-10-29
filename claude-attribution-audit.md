@@ -172,7 +172,7 @@ Revision discipline:
 
 ### 6 — Report
 
-Summarize: how many items were revised (with links), how many were surfaced for confirmation and await a decision, and how many were deliberately left untouched (Tiers C/D) and why. State how many commits were listed and that none were rewritten. Repeat which surfaces were not searched (Step 3). Reaffirm that detection was heuristic and the untouched buckets are not "confirmed clean" — only "not confidently Claude".
+Summarize: how many items were revised (with links), how many were surfaced for confirmation and await a decision, and how many were deliberately left untouched (Tiers C/D) and why. List every item Step 5 flagged back instead of editing (body changed since it was fetched or cached, reads like the user's own writing, intentional "we/our" voice, first-person title), with its link and the reason, so none of them drop out of the report. List every edit the Step 5 log recorded as FAIL. State how many commits were listed and that none were rewritten. Repeat which surfaces were not searched (Step 3) and which counts are lower bounds (Step 4). Reaffirm that detection was heuristic and the untouched buckets are not "confirmed clean" — only "not confidently Claude".
 
 ---
 
