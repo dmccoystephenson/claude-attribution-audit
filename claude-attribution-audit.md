@@ -55,7 +55,7 @@ gh search prs    --owner dmccoystephenson --author=@me --created '>=YYYY-MM-DD' 
 #   --jq '[.[].repository.name] | group_by(.) | map({repo:.[0],n:length}) | sort_by(.n) | reverse | .[] | "\(.n)\t\(.repo)"'
 ```
 
-Use `--owner dmccoystephenson` to scope to repos the user *owns* — this automatically excludes org-owned work repos (Tier C), a clean way to drop the riskiest bucket.
+Use `--owner dmccoystephenson` to scope to repos the user *owns* — this excludes org-owned work repos, which drops part of the riskiest bucket (Tier C). It does not exclude all of Tier C: a work repo can also sit under the user's own account (see Step 3), so Tier C still has to be determined before anything is revised.
 
 **When a search is capped,** split it into narrower `--created` windows (e.g. one per year, or per quarter for dense periods), re-run each window, and union the results by URL. Keep splitting until no window returns exactly 1000. The same rule applies to the Step 3 issue/PR marker searches. If a count still can't be brought under the cap, carry it forward as a lower bound and say so in the Step 4 report.
 
