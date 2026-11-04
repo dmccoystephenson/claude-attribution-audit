@@ -57,6 +57,8 @@ gh search prs    --owner dmccoystephenson --author=@me --created '>=YYYY-MM-DD' 
 
 Use `--owner dmccoystephenson` to scope to repos the user *owns* — this excludes org-owned work repos, which drops part of the riskiest bucket (Tier C). It does not exclude all of Tier C: a work repo can also sit under the user's own account (see Step 3), so Tier C still has to be determined before anything is revised.
 
+`--owner` also limits what these counts can say. Repos outside the user's account never appear in the Step 2 results, even under the Step 1 default of all repos, so the no-marker counts for Tiers B, C, and D cover only repos under that account. Only the Step 3 marker searches reach further. A Tier B repo that sits under an org therefore has no count here, which is not the same as a count of zero (see Step 4).
+
 **When a search is capped,** split it into narrower `--created` windows (e.g. one per year, or per quarter for dense periods), re-run each window, and union the results by URL. Keep splitting until no window returns exactly 1000. The same rule applies to the Step 3 issue/PR marker searches. If a count still can't be brought under the cap, carry it forward as a lower bound and say so in the Step 4 report.
 
 **When a search returns nothing or fails,** do not read it as "nothing to fix". If both Step 2 searches return zero results, the scope is probably wrong (a mistyped `--repo`, a `--created` window in the future, or the wrong account). Report the exact commands and scope to the user and stop before Step 3. A `gh` error (HTTP 401/403 or a rate-limit message) is not an empty result. Retry once (for a rate limit, after the reset time `gh` reports), and if it still fails, report the error text and stop. An empty Step 3 marker search is a normal outcome: it means no body carries that marker, not that the repos are clean.
@@ -118,6 +120,7 @@ Build a markdown report — do **not** edit anything yet:
 - **Commits (list only):** table of `repo · short SHA · first line of message · which marker` from the Step 3 commit searches, marked as never rewritten (see Step 5). Commit hits from Tier C repos are left out and counted under Tier C instead.
 - **Capped or truncated searches:** name each one (Step 2 cap, Step 3 commit limit) and mark the counts it feeds as lower bounds.
 - **Commit scope:** if the user chose a repo or date window in Step 1, state that the commit list was filtered to that repo after the search and that no date window was applied to commits.
+- **Repos outside the account:** if Step 2 ran with `--owner`, name every Tier B repo outside the user's account as not counted rather than listing it with zero, and state that the no-marker counts for Tiers B, C, and D cover only repos under the account (see Step 2).
 - **Surfaces not searched:** PR/issue comments, review bodies, and inline review comments (see Step 3). State that they were not audited, so the report does not read as full coverage.
 - A headline summary: "N strong-signal items need the sign-off; M contextual items await your confirmation; exact detection is impossible for the rest."
 
@@ -172,7 +175,7 @@ Revision discipline:
 
 ### 6 — Report
 
-Summarize: how many items were revised (with links), how many were surfaced for confirmation and await a decision, and how many were deliberately left untouched (Tiers C/D) and why. List every item Step 5 flagged back instead of editing (body changed since it was fetched or cached, reads like the user's own writing, intentional "we/our" voice, first-person title), with its link and the reason, so none of them drop out of the report. List every edit the Step 5 log recorded as FAIL. State how many commits were listed and that none were rewritten. Repeat which surfaces were not searched (Step 3) and which counts are lower bounds (Step 4). Reaffirm that detection was heuristic and the untouched buckets are not "confirmed clean" — only "not confidently Claude".
+Summarize: how many items were revised (with links), how many were surfaced for confirmation and await a decision, and how many were deliberately left untouched (Tiers C/D) and why. List every item Step 5 flagged back instead of editing (body changed since it was fetched or cached, reads like the user's own writing, intentional "we/our" voice, first-person title), with its link and the reason, so none of them drop out of the report. List every edit the Step 5 log recorded as FAIL. State how many commits were listed and that none were rewritten. Repeat which surfaces were not searched (Step 3), which counts are lower bounds (Step 4), and which Tier B repos were not counted (Step 4). Reaffirm that detection was heuristic and the untouched buckets are not "confirmed clean" — only "not confidently Claude".
 
 ---
 
