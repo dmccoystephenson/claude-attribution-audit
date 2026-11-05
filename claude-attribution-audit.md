@@ -68,7 +68,7 @@ Use `--owner dmccoystephenson` to scope to repos the user *owns* — this exclud
 **Strong machine markers** (high precision — almost certainly Claude). As in Step 2, run every marker search against **both** `gh search issues` and `gh search prs` — they are disjoint, and PR descriptions are where the `Generated with Claude Code` footer most often appears. Classify the combined results by URL.
 
 ```bash
-# Already-compliant — these are FINE, exclude from the worklist
+# Sign-off text found — exclude from the worklist once the post is confirmed signed (see below)
 gh search issues --author=@me --match body "drafted by Claude on behalf" --limit 1000 --json url,title,repository
 gh search prs    --author=@me --match body "drafted by Claude on behalf" --limit 1000 --json url,title,repository
 
@@ -78,6 +78,8 @@ gh search prs    --author=@me --match body "Generated with Claude Code" --limit 
 gh search issues --author=@me --match body "Co-authored-by Claude"       --limit 1000 --json url,title,repository
 gh search prs    --author=@me --match body "Co-authored-by Claude"       --limit 1000 --json url,title,repository
 ```
+
+**A sign-off hit does not prove a post is signed.** `--match body` finds the text anywhere in the body, so a post that only quotes the sign-off (in a test plan, a blockquote, or a discussion of the convention) comes back too. A post counts as signed only when the sign-off stands alone on its own line, italicized or not, outside any blockquote or code fence. For each item that appears in both the sign-off results and a strong-marker result, fetch its body with the read-only `gh api` calls in Step 5 and apply that test. A signed item stays out of the worklist. An unsigned one remains a Tier A candidate. Treat a failed fetch like the `gh` errors in Step 2, and do not count that item as signed. A sign-off hit with no strong marker stays out of the worklist without a fetch, because nothing else ties it to Claude.
 
 For commits (markers live in commit messages, not the search-issues surface):
 
@@ -137,7 +139,7 @@ Each approved item gets **two passes, not one** (a sign-off alone is insufficien
    ```
    \n\n---\n\n_drafted by Claude on behalf of Daniel Stephenson_
    ```
-   Bodies with NO authorial first-person need only the sign-off appended.
+   Bodies with NO authorial first-person need only the sign-off appended. A body that is already signed (see Step 3) never gets a second sign-off: convert any authorial first-person and leave the existing line in place. If it has no authorial first-person either, skip the item and log it as already signed. A capped sign-off search can let such an item reach this step.
 
 **Editing mechanics (robust against bodies with special chars/heredocs):** build the new body in a file and PATCH via the REST API with `jq --rawfile`. **Issues and PRs use DIFFERENT endpoints** (classify by URL):
 
@@ -175,7 +177,7 @@ Revision discipline:
 
 ### 6 — Report
 
-Summarize: how many items were revised (with links), how many were surfaced for confirmation and await a decision, and how many were deliberately left untouched (Tiers C/D) and why. List every item Step 5 flagged back instead of editing (body changed since it was fetched or cached, reads like the user's own writing, intentional "we/our" voice, first-person title), with its link and the reason, so none of them drop out of the report. List every edit the Step 5 log recorded as FAIL. State how many commits were listed and that none were rewritten. Repeat which surfaces were not searched (Step 3), which counts are lower bounds (Step 4), and which Tier B repos were not counted (Step 4). Reaffirm that detection was heuristic and the untouched buckets are not "confirmed clean" — only "not confidently Claude".
+Summarize: how many items were revised (with links), how many were surfaced for confirmation and await a decision, and how many were deliberately left untouched (Tiers C/D) and why. List every item Step 5 flagged back instead of editing (body changed since it was fetched or cached, reads like the user's own writing, intentional "we/our" voice, first-person title), with its link and the reason, so none of them drop out of the report. List every edit the Step 5 log recorded as FAIL. State how many items Step 5 skipped as already signed. State how many commits were listed and that none were rewritten. Repeat which surfaces were not searched (Step 3), which counts are lower bounds (Step 4), and which Tier B repos were not counted (Step 4). Reaffirm that detection was heuristic and the untouched buckets are not "confirmed clean" — only "not confidently Claude".
 
 ---
 
@@ -185,7 +187,7 @@ Run this section when the skill may have drifted from reality — e.g. after the
 
 1. Read this skill file from top to bottom.
 2. For each command, path, or assumption, verify it is still correct:
-   - The commands this file runs still exist and behave as described: `gh auth status` and `gh api user` (Step 1), `gh search issues`/`prs`/`commits` with their flags and `--json` fields (Steps 2–3), the read-only `gh api` body fetches, the `gh api -X PATCH` endpoints, and `jq --rawfile` (Step 5), and `gh issue create` (below)
+   - The commands this file runs still exist and behave as described: `gh auth status` and `gh api user` (Step 1), `gh search issues`/`prs`/`commits` with their flags and `--json` fields (Steps 2–3), the read-only `gh api` body fetches (Steps 3 and 5), the `gh api -X PATCH` endpoints and `jq --rawfile` (Step 5), and `gh issue create` (below)
    - The sign-off text still matches the user's stated convention and is spelled identically everywhere in this file
    - Tier B and Tier C are still derived at runtime and never recorded here: the Step 3 `ls ~/.claude/commands/ | grep -- '-dev-loop'` still finds the installed dev-loop skills, and Tier C is still asked of the user (or inferred) each run
    - The surfaces named as not searched in Step 3 are still named the same way in the Step 4 and Step 6 reports
