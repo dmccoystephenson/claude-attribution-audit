@@ -92,7 +92,7 @@ A commit search that returns exactly its `--limit` (100) is probably truncated. 
 
 **Surfaces these searches do not reach.** `--author=@me` matches issues and PRs the user *opened*, and `--match body` searches their bodies. The searches above therefore never collect PR/issue comments (including ones the user left on items opened by others), review bodies, or inline review comments. Do not count those surfaces as audited. Name them as not searched in the Step 4 report. A specific PR/issue comment the user points to can still be revised through the Step 5 comment endpoint under the same rules. Step 5 gives no endpoint for review bodies or inline review comments, so list any of those the user points to rather than editing them.
 
-**Classify each authored repo into one of four tiers:**
+**Classify each authored item into one of four tiers:**
 
 | Tier | What it is | Action |
 |---|---|---|
@@ -102,6 +102,10 @@ A commit search that returns exactly its `--limit` (100) is probably truncated. 
 | **D — Ambiguous no-marker** | Everything else with no marker and no clear context | Leave for manual eyeball; do not auto-edit |
 
 **Tier C overrides Tier A.** The marker searches above don't pass `--owner`, so their hits can include work repos. Org-owned repos are only one case, because a work repo can also sit under the user's own account. A marker hit in a Tier C repo stays in Tier C: count it there and keep it out of the Tier A worklist unless the user explicitly opts that repo in.
+
+**Tiers belong to items, not repos.** Tier A comes from a post's own markers, while Tiers B and C come from the repo it sits in, so one repo can hold items in several tiers. Outside Tier C repos, a marker hit stays in Tier A even in a Tier B repo.
+
+**Build the no-marker counts from the Step 2 results,** matching them to the Step 3 issue/PR results by URL. Tier C takes every item in a Tier C repo, on top of the marker hits above. From the remaining items, remove every Tier A item and every sign-off hit, then count the rest under Tier B or Tier D by repo. Without this, posts that already carry the sign-off inflate the Tier B and Tier D counts. A Step 3 search that stays capped leaves items in these counts that belong out of them, so they can run high rather than low.
 
 **Derive the tier lists at runtime — do not hard-code them here** (this file is public; the specific repo names are the user's private taxonomy):
 
@@ -120,7 +124,8 @@ Build a markdown report — do **not** edit anything yet:
 - **Tier B (confirm-first):** per-repo counts and links; flagged as "likely Claude, needs your confirmation". If no `*-dev-loop` skills were found in Step 3, say that Tier B is empty for that reason.
 - **Tier C / D:** counts only, with a one-line note that these are excluded by default and why.
 - **Commits (list only):** table of `repo · short SHA · first line of message · which marker` from the Step 3 commit searches, marked as never rewritten (see Step 5). Commit hits from Tier C repos are left out and counted under Tier C instead.
-- **Capped or truncated searches:** name each one (Step 2 cap, Step 3 commit limit) and mark the counts it feeds as lower bounds.
+- **Sign-off hits:** two counts outside Tier C repos, listed under no tier: marker hits confirmed signed in Step 3, and sign-off hits with no strong marker. The second count was not fetched, so some of those posts may only quote the sign-off.
+- **Capped or truncated searches:** name each one (Step 2 cap, Step 3 commit limit) and mark the counts it feeds as lower bounds. A capped Step 3 issue/PR search also means the Tier B and Tier D counts may run high (see Step 3), so say that for those counts.
 - **Commit scope:** if the user chose a repo or date window in Step 1, state that the commit list was filtered to that repo after the search and that no date window was applied to commits.
 - **Repos outside the account:** if Step 2 ran with `--owner`, name every Tier B repo outside the user's account as not counted rather than listing it with zero, and state that the no-marker counts for Tiers B, C, and D cover only repos under the account (see Step 2).
 - **Surfaces not searched:** PR/issue comments, review bodies, and inline review comments (see Step 3). State that they were not audited, so the report does not read as full coverage.
@@ -177,7 +182,7 @@ Revision discipline:
 
 ### 6 — Report
 
-Summarize: how many items were revised (with links), how many were surfaced for confirmation and await a decision, and how many were deliberately left untouched (Tiers C/D) and why. List every item Step 5 flagged back instead of editing (body changed since it was fetched or cached, reads like the user's own writing, intentional "we/our" voice, first-person title), with its link and the reason, so none of them drop out of the report. List every edit the Step 5 log recorded as FAIL. State how many items Step 5 skipped as already signed. State how many commits were listed and that none were rewritten. Repeat which surfaces were not searched (Step 3), which counts are lower bounds (Step 4), and which Tier B repos were not counted (Step 4). Reaffirm that detection was heuristic and the untouched buckets are not "confirmed clean" — only "not confidently Claude".
+Summarize: how many items were revised (with links), how many were surfaced for confirmation and await a decision, and how many were deliberately left untouched (Tiers C/D) and why. List every item Step 5 flagged back instead of editing (body changed since it was fetched or cached, reads like the user's own writing, intentional "we/our" voice, first-person title), with its link and the reason, so none of them drop out of the report. List every edit the Step 5 log recorded as FAIL. State how many items Step 5 skipped as already signed. State how many commits were listed and that none were rewritten. Repeat which surfaces were not searched (Step 3), which counts are lower bounds or may run high (Step 4), and which Tier B repos were not counted (Step 4). Reaffirm that detection was heuristic and the untouched buckets are not "confirmed clean" — only "not confidently Claude".
 
 ---
 
