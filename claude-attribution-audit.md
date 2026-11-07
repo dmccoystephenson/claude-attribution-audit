@@ -90,6 +90,8 @@ gh search commits --author=@me "Generated with Claude Code"     --limit 100 --js
 
 A commit search that returns exactly its `--limit` (100) is probably truncated. Commits are only listed for the user, never rewritten (Step 5), so report the list as incomplete instead of presenting it as the full set. These searches also ignore the Step 1 scope (see Step 1), so filter the results to the chosen repo and treat any date window as not applied. Check for truncation on the unfiltered count, before the repo filter: a filtered list shorter than 100 can still be missing commits from that repo.
 
+**Merge the marker hits before counting them.** One post can match more than one marker search, and one commit can match both commit searches. Merge the issue and PR results by URL and the commit results by SHA, keeping every marker that matched, so each item is counted once. Run the Step 2 cap check and the commit truncation check on each search before merging, because a merged list no longer shows either.
+
 **Surfaces these searches do not reach.** `--author=@me` matches issues and PRs the user *opened*, and `--match body` searches their bodies. The searches above therefore never collect PR/issue comments (including ones the user left on items opened by others), review bodies, or inline review comments. Do not count those surfaces as audited. Name them as not searched in the Step 4 report. A specific PR/issue comment the user points to can still be revised through the Step 5 comment endpoint under the same rules. Step 5 gives no endpoint for review bodies or inline review comments, so list any of those the user points to rather than editing them.
 
 **Classify each authored item into one of four tiers:**
@@ -120,10 +122,10 @@ A commit search that returns exactly its `--limit` (100) is probably truncated. 
 
 Build a markdown report — do **not** edit anything yet:
 
-- **Tier A (auto-revise candidates):** table of `repo · #num · title · URL · which marker · missing sign-off?`. Marker hits from Tier C repos are left out and counted under Tier C instead.
+- **Tier A (auto-revise candidates):** table of `repo · #num · title · URL · which markers · missing sign-off?`, one row per URL. Marker hits from Tier C repos are left out and counted under Tier C instead.
 - **Tier B (confirm-first):** per-repo counts and links; flagged as "likely Claude, needs your confirmation". If no `*-dev-loop` skills were found in Step 3, say that Tier B is empty for that reason.
 - **Tier C / D:** counts only, with a one-line note that these are excluded by default and why.
-- **Commits (list only):** table of `repo · short SHA · first line of message · which marker` from the Step 3 commit searches, marked as never rewritten (see Step 5). Commit hits from Tier C repos are left out and counted under Tier C instead.
+- **Commits (list only):** table of `repo · short SHA · first line of message · which markers` from the Step 3 commit searches, one row per SHA, marked as never rewritten (see Step 5). Commit hits from Tier C repos are left out and counted under Tier C instead.
 - **Sign-off hits:** two counts outside Tier C repos, listed under no tier: marker hits confirmed signed in Step 3, and sign-off hits with no strong marker. The second count was not fetched, so some of those posts may only quote the sign-off.
 - **Capped or truncated searches:** name each one (Step 2 cap, Step 3 commit limit) and mark the counts it feeds as lower bounds. A capped Step 3 issue/PR search also means the Tier B and Tier D counts may run high (see Step 3), so say that for those counts.
 - **Commit scope:** if the user chose a repo or date window in Step 1, state that the commit list was filtered to that repo after the search and that no date window was applied to commits.
@@ -182,7 +184,7 @@ Revision discipline:
 
 ### 6 — Report
 
-Summarize: how many items were revised (with links), how many were surfaced for confirmation and await a decision, and how many were deliberately left untouched (Tiers C/D) and why. List every item Step 5 flagged back instead of editing (body changed since it was fetched or cached, reads like the user's own writing, intentional "we/our" voice, first-person title), with its link and the reason, so none of them drop out of the report. List every edit the Step 5 log recorded as FAIL. State how many items Step 5 skipped as already signed. State how many commits were listed and that none were rewritten. Repeat which surfaces were not searched (Step 3), which counts are lower bounds or may run high (Step 4), and which Tier B repos were not counted (Step 4). Reaffirm that detection was heuristic and the untouched buckets are not "confirmed clean" — only "not confidently Claude".
+Summarize: how many items were revised (with links), how many were surfaced for confirmation and await a decision, and how many were deliberately left untouched (Tiers C/D) and why. List every item Step 5 flagged back instead of editing (body changed since it was fetched or cached, reads like the user's own writing, intentional "we/our" voice, first-person title), with its link and the reason, so none of them drop out of the report. List every edit the Step 5 log recorded as FAIL. State how many items Step 5 skipped as already signed. State how many commits were listed and that none were rewritten. If the user chose a repo or date window, repeat the Step 4 commit-scope note beside that count. Repeat which surfaces were not searched (Step 3), which counts are lower bounds or may run high (Step 4), and which Tier B repos were not counted (Step 4). Reaffirm that detection was heuristic and the untouched buckets are not "confirmed clean" — only "not confidently Claude".
 
 ---
 
