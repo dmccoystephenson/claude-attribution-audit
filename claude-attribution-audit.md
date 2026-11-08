@@ -154,15 +154,19 @@ Give every item its own body file, keyed on repo and number (or comment id). A s
 
 **Fetch the current body first.** The Step 2 and Step 3 searches do not collect `body`, so fetch each approved item's body read-only from the same endpoint the PATCH targets, just before revising it. Build the revision from that fetched text, never from memory or an earlier run. Fetch it again right before the PATCH. If it differs from the text the revision was built from, the post was edited in the meantime, possibly by the user, so flag it back to the user instead of editing it.
 
+**When a fetch or PATCH fails.** No PATCH runs without a successful fetch right before it. If either fetch returns a `gh` error (HTTP 401/403/404, a rate-limit message, or a network failure), retry it once, as in Step 2 (for a rate limit, wait for the reset time `gh` reports). If it still fails, leave the item unedited, log it as FAIL with the error text, and move to the next item. Do not retry a failed PATCH blind, because it may have landed despite the error. Fetch the body again first. If it already matches the revision, log the item as OK. If it still matches the text the revision was built from, retry the PATCH once. Otherwise flag the item back to the user. If the same auth or rate-limit error fails two items in a row, stop the batch and report it, because the remaining items would fail the same way. Every FAIL reaches the Step 6 report.
+
+**A post with no body.** The API can return `null` for an empty body, so the fetches below use `.body // ""`, which prints an empty line instead of the word `null`. Never build a revision from the literal text `null`. An empty body has no first-person to convert, so skip the item and flag it back to the user rather than PATCHing a body that holds only the sign-off.
+
 ```bash
 # per-item body file — never reuse one path across items
 BODY_FILE="/tmp/claude-attribution-audit-${OWNER_REPO//\//_}-$NUM.md"     # issue or PR
 # BODY_FILE="/tmp/claude-attribution-audit-${OWNER_REPO//\//_}-c$CID.md"  # comment
 
 # read-only fetch of the current body (GET on the same path the PATCH below targets)
-gh api "repos/$OWNER_REPO/issues/$NUM" --jq '.body'            # issue
-gh api "repos/$OWNER_REPO/pulls/$NUM" --jq '.body'             # pull request
-gh api "repos/$OWNER_REPO/issues/comments/$CID" --jq '.body'   # comment
+gh api "repos/$OWNER_REPO/issues/$NUM" --jq '.body // ""'            # issue
+gh api "repos/$OWNER_REPO/pulls/$NUM" --jq '.body // ""'             # pull request
+gh api "repos/$OWNER_REPO/issues/comments/$CID" --jq '.body // ""'   # comment
 
 # issue  (url contains /issues/)
 jq -n --rawfile body "$BODY_FILE" '{body:$body}' | gh api -X PATCH "repos/$OWNER_REPO/issues/$NUM" --input -
@@ -184,7 +188,7 @@ Revision discipline:
 
 ### 6 — Report
 
-Summarize: how many items were revised (with links), how many were surfaced for confirmation and await a decision, and how many were deliberately left untouched (Tiers C/D) and why. List every item Step 5 flagged back instead of editing (body changed since it was fetched or cached, reads like the user's own writing, intentional "we/our" voice, first-person title), with its link and the reason, so none of them drop out of the report. List every edit the Step 5 log recorded as FAIL. State how many items Step 5 skipped as already signed. State how many commits were listed and that none were rewritten. If the user chose a repo or date window, repeat the Step 4 commit-scope note beside that count. Repeat which surfaces were not searched (Step 3), which counts are lower bounds or may run high (Step 4), and which Tier B repos were not counted (Step 4). Reaffirm that detection was heuristic and the untouched buckets are not "confirmed clean" — only "not confidently Claude".
+Summarize: how many items were revised (with links), how many were surfaced for confirmation and await a decision, and how many were deliberately left untouched (Tiers C/D) and why. List every item Step 5 flagged back instead of editing (body changed since it was fetched or cached, no body, reads like the user's own writing, intentional "we/our" voice, first-person title), with its link and the reason, so none of them drop out of the report. List every item the Step 5 log recorded as FAIL (a failed fetch or PATCH) with its error text, and say if the batch stopped early. State how many items Step 5 skipped as already signed. State how many commits were listed and that none were rewritten. If the user chose a repo or date window, repeat the Step 4 commit-scope note beside that count. Repeat which surfaces were not searched (Step 3), which counts are lower bounds or may run high (Step 4), and which Tier B repos were not counted (Step 4). Reaffirm that detection was heuristic and the untouched buckets are not "confirmed clean" — only "not confidently Claude".
 
 ---
 
