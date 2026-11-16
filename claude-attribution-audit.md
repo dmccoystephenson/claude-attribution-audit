@@ -36,7 +36,7 @@ If not authenticated, stop and ask the user to run `! gh auth status` / authenti
 
 Decide scope with the user (default: all repos, no date window). They may narrow to a single repo (`--repo owner/name` on searches) or a date window (`--created '>=YYYY-MM-DD'`). Scoping by repo is the most useful lever — see the tiers in Step 3.
 
-Apply the chosen scope to every issue and PR search in Steps 2 and 3, including the marker searches. Otherwise a single-repo audit still builds its Tier A worklist from every repo. With no date window, drop `--created '>=YYYY-MM-DD'` from the Step 2 searches rather than running the placeholder.
+Apply the chosen scope to every issue and PR search in Steps 2 and 3, including the marker searches. For a single-repo audit, replace `--owner dmccoystephenson` with `--repo owner/name` in the Step 2 searches rather than passing both, and add `--repo owner/name` to the Step 3 issue/PR marker searches, which carry no `--owner`. With both flags, the result depends on how GitHub combines the two qualifiers, and this skill does not rely on that. Otherwise a single-repo audit still builds its Tier A worklist from every repo. With no date window, drop `--created '>=YYYY-MM-DD'` from the Step 2 searches rather than running the placeholder.
 
 The Step 3 commit searches do not take the chosen scope. They run across every repo and every date. For a single-repo audit, drop commits from other repos (by their `repository` field) before reporting. A date window is not applied to commits at all, so the Step 4 report must say so.
 
@@ -55,7 +55,7 @@ gh search prs    --owner dmccoystephenson --author=@me --created '>=YYYY-MM-DD' 
 #   --jq '[.[].repository.name] | group_by(.) | map({repo:.[0],n:length}) | sort_by(.n) | reverse | .[] | "\(.n)\t\(.repo)"'
 ```
 
-Use `--owner dmccoystephenson` to scope to repos the user *owns* — this excludes org-owned work repos, which drops part of the riskiest bucket (Tier C). It does not exclude all of Tier C: a work repo can also sit under the user's own account (see Step 3), so Tier C still has to be determined before anything is revised.
+Use `--owner dmccoystephenson` to scope to repos the user *owns* — this excludes org-owned work repos, which drops part of the riskiest bucket (Tier C). It does not exclude all of Tier C: a work repo can also sit under the user's own account (see Step 3), so Tier C still has to be determined before anything is revised. A single-repo audit drops `--owner` for `--repo` (see Step 1), so it can reach a repo outside the user's account.
 
 `--owner` also limits what these counts can say. Repos outside the user's account never appear in the Step 2 results, even under the Step 1 default of all repos, so the no-marker counts for Tiers B, C, and D cover only repos under that account. Only the Step 3 marker searches reach further. A Tier B repo that sits under an org therefore has no count here, which is not the same as a count of zero (see Step 4).
 
