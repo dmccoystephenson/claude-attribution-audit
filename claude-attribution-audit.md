@@ -140,7 +140,7 @@ Present this and **stop for user direction.** Ask which tiers to act on.
 Each approved item gets **two passes, not one** (a sign-off alone is insufficient — see the Non-negotiable rules):
 
 1. **Scan the body for authorial first-person.** Use a targeted pattern for Claude narrating *its own* actions/opinions, e.g.:
-   `(^|[^A-Za-z\`])(I (found|ran|made|used|asked|inferred|optimized|noticed|resolved|started|chose|decided|wrote|authored|verified|think|realized|could|had|almost)|I've|I'd|## How I|What I did|my code|my analysis|my first attempt)`
+   `` (^|[^A-Za-z`])(I (found|ran|made|used|asked|inferred|optimized|noticed|resolved|started|chose|decided|wrote|authored|verified|think|realized|could|had|almost)|I've|I'd|## How I|What I did|my code|my analysis|my first attempt) ``
    Then **manually triage every hit** against the exclusion list in the Non-negotiable rules (repo names like `my-claude-skills`, `I/O`, code/test names, blockquotes, ASCII, domain content). Most hits are noise — only convert true authorial narration.
 2. **Convert** the surviving authorial sentences to passive / explicit-Claude voice, then **append** the sign-off block:
    ```
